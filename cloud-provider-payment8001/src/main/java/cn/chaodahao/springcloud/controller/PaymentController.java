@@ -35,57 +35,62 @@ public class PaymentController {
     private EurekaDiscoveryClient discoveryClient;
 
     @PostMapping(value = "/payment/create")
-    public CommonResult create(@RequestBody Payment payment){
+    public CommonResult create(@RequestBody Payment payment) {
         int result = paymentService.create(payment);
         log.info("*************插入结果：" + result);
 
-        if(result > 0){
-            return new CommonResult(200, "插入数据库成功！" + "   服务端口："+serverPort, result);
-        }else{
+        if (result > 0) {
+            return new CommonResult(200, "插入数据库成功！" + "   服务端口：" + serverPort, result);
+        } else {
             return new CommonResult(444, "插入数据库失败！", null);
         }
     }
 
     @GetMapping(value = "/payment/get/{id}")
-    public CommonResult getPaymentById(@PathVariable("id") Long id){
+    public CommonResult getPaymentById(@PathVariable("id") Long id) {
         Payment result = paymentService.getPaymentById(id);
         log.info("*************查询结果：" + result);
 
-        if(result != null){
-            return new CommonResult(200, "查询成功！" + "  服务端口："+serverPort, result);
-        }else{
-            return new CommonResult(444, "没有对应记录！查询id = "+id, null);
+        if (result != null) {
+            return new CommonResult(200, "查询成功！" + "  服务端口：" + serverPort, result);
+        } else {
+            return new CommonResult(444, "没有对应记录！查询id = " + id, null);
         }
     }
 
     @GetMapping(value = "/payment/discovery")
-    public Object discovery(){
+    public Object discovery() {
         List<String> services = discoveryClient.getServices();
-        for(String element : services){
+        for (String element : services) {
             log.info("***********element: " + element);
         }
         List<ServiceInstance> instances = discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
-        for(ServiceInstance element : instances){
+        for (ServiceInstance element : instances) {
             log.info(element.getServiceId() + "\t" + element.getHost() + "\t" + element.getPort() + "\t"
                     + element.getUri());
         }
-        return  this.discoveryClient;
+        return this.discoveryClient;
     }
 
     @GetMapping(value = "/payment/lb")
-    public String getPaymentLB(){
+    public String getPaymentLB() {
         return serverPort;
     }
 
     @GetMapping(value = "/payment/feign/timeout")
-    public String paymentFeignTimeout(){
+    public String paymentFeignTimeout() {
 
-        try{
+        try {
             TimeUnit.SECONDS.sleep(3);
-            System.out.println("*****paymentFeignTimeOut from port: "+serverPort);
+            System.out.println("*****paymentFeignTimeOut from port: " + serverPort);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return serverPort;
+    }
+
+    @GetMapping("/payment/zipkin")
+    public String paymentZipkin() {
+        return "hi ,i'am paymentzipkin server fall back，welcome to zipkin，O(∩_∩)O哈哈~";
     }
 }

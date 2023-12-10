@@ -40,12 +40,12 @@ public class OrderController {
     private EurekaDiscoveryClient discoveryClient;
 
     @GetMapping("/consumer/payment/create")
-    public CommonResult<Payment> create(Payment payment){
+    public CommonResult<Payment> create(Payment payment) {
         return restTemplate.postForObject(PAYMENT_URL + "/payment/create", payment, CommonResult.class);
     }
 
     @GetMapping("/consumer/payment/get/{id}")
-    public CommonResult<Payment> getPayment(@PathVariable("id") Long id){
+    public CommonResult<Payment> getPayment(@PathVariable("id") Long id) {
         /**
          * getForObject
          * 返回对象为响应体中数据转化成的对象，基本上可以理解为Json, 相比getForEntity使用较多, 因为也没必要获取那么多信息
@@ -55,28 +55,35 @@ public class OrderController {
 
     //RestTemplate的getForEntity的使用
     @GetMapping("/consumer/payment/getForEntity/{id}")
-    public CommonResult<Payment> getPaymentForEntity(@PathVariable("id") Long id){
+    public CommonResult<Payment> getPaymentForEntity(@PathVariable("id") Long id) {
         /**
          * getForEntity
          * 返回对象为ResponseEntity对象，包含了响应中的一些重要信息，比如响应头、响应状态码、响应体等
          */
         ResponseEntity<CommonResult> entity = restTemplate.getForEntity(PAYMENT_URL + "/payment/get/" + id, CommonResult.class);
-        if(entity.getStatusCode().is2xxSuccessful()){
+        if (entity.getStatusCode().is2xxSuccessful()) {
             return entity.getBody();
-        }else{
+        } else {
             return new CommonResult<>(444, "error message !");
         }
     }
 
     @GetMapping(value = "/consumer/payment/lb")
-    public String getPaymentLB(){
+    public String getPaymentLB() {
         List<ServiceInstance> instances = discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
-        if(instances == null || instances.size() <= 0){
+        if (instances == null || instances.size() <= 0) {
             return null;
         }
         ServiceInstance serviceInstance = loadBalancer.instance(instances);
         URI uri = serviceInstance.getUri();
         log.info("*******************URI: " + uri.toString());
         return restTemplate.getForObject(uri + "/payment/lb", String.class);
+    }
+
+    // ====================> zipkin+sleuth
+    @GetMapping("/consumer/payment/zipkin")
+    public String paymentZipkin() {
+        String result = restTemplate.getForObject("http://localhost:8001" + "/payment/zipkin/", String.class);
+        return result;
     }
 }
